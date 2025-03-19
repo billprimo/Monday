@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Διαχείριση Μηνυμάτων</title>
+</head>
+<body>
+    <h1>Διαχείριση Μηνυμάτων</h1>
+    <div id="messages"></div>
+
+    <script>
+        // Λειτουργία για να φορτώσουμε τα μηνύματα
+       // Συνάρτηση για χειρισμό της απόφασης
+function handleDecision(message, decision) {
+    fetch('https://sms-event.netlify.app/.netlify/functions/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            messageId: message.id,  // Στέλνουμε το ID του μηνύματος
+            decision: decision
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Η απόφαση καταχωρήθηκε επιτυχώς');
+
+            // Άμεση ανανέωση της λίστας μηνυμάτων στην οθόνη
+            updateMessageStatus(message, decision);  // Καλούμε τη νέα συνάρτηση που ενημερώνει την οθόνη
+
+        }
+    })
+    .catch(error => {
+        console.error('Σφάλμα:', error);
+    });
+
+    // Αποστολή της απόφασης στο messagesSend
+    fetch('https://sms-event.netlify.app/.netlify/functions/messagesDecision', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            messageId: message.id,  // Στέλνουμε το ID για να ξέρουμε ποιο μήνυμα επεξεργαζόμαστε
+            decision: decision
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Η απόφαση καταχωρήθηκε επιτυχώς στο messagesDecisions');
+            // Άμεση ανανέωση της λίστας μηνυμάτων στην οθόνη
+            updateMessageStatus(message, decision);  // Καλούμε τη νέα συνάρτηση που ενημερώνει την οθόνη
+        }
+    })
+    .catch(error => {
+        console.error('Σφάλμα κατά την αποστολή στην messagesSend:', error);
+    });
+}
+
+// Συνάρτηση για άμεση ανανέωση του μηνύματος στην οθόνη
+function updateMessageStatus(message, decision) {
+    const messagesDiv = document.getElementById('messages');
+    const messageElements = messagesDiv.getElementsByClassName('message-item');
+    
+    // Βρίσκουμε το μήνυμα που αντιστοιχεί στο ID
+    for (let i = 0; i < messageElements.length; i++) {
+        const msgElement = messageElements[i];
+        
+        // Αν το ID ταιριάζει με το ID του μηνύματος, το ενημερώνουμε
+        if (msgElement.dataset.id == message.id) {
+            // Διαγραφή του μηνύματος αν είναι "Απόρριψη"
+            if (decision === 'reject') {
+                msgElement.remove();
+            } else {
+                // Αν είναι "Αποδοχή", απλώς αλλάζουμε το στυλ ή προσθέτουμε ένα χαρακτηριστικό
+                msgElement.style.backgroundColor = '#d4f1d4';  // Ένα ανοιχτό πράσινο για αποδοχή
+                msgElement.querySelector('button.accept').disabled = true;  // Απενεργοποιούμε το κουμπί αποδοχής
+                msgElement.querySelector('button.reject').disabled = true;  // Απενεργοποιούμε το κουμπί απόρριψης
+            }
+            break;
+        }
+    }
+}
+
+    </script>
+</body>
+</html>

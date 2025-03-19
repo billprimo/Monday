@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Αποδεκτές Αποφάσεις</title>
+</head>
+<body>
+    <h1>Αποδεκτές Αποφάσεις</h1>
+    <div id="acceptedMessages"></div>
+
+    <script>
+        function loadAcceptedMessages() {
+            fetch('https://sms-event.netlify.app/.netlify/functions/messagesDecision')
+                .then(response => response.json())
+                .then(data => {
+                    const acceptedDiv = document.getElementById('acceptedMessages');
+                    const messages = data.decisions || [];
+
+                    acceptedDiv.innerHTML = '';
+
+                    if (messages.length === 0) {
+                        acceptedDiv.innerHTML = '<p>Δεν υπάρχουν αποδεκτές αποφάσεις</p>';
+                    } else {
+                        messages.forEach(msg => {
+                            const messageElement = document.createElement('div');
+                            messageElement.textContent = msg.message;
+                            acceptedDiv.appendChild(messageElement);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Σφάλμα:', error);
+                    document.getElementById('acceptedMessages').textContent = 'Σφάλμα φόρτωσης.';
+                });
+        }
+
+        loadAcceptedMessages();
+        setInterval(loadAcceptedMessages, 3000);
+    </script>
+</body>
+</html>
